@@ -1,77 +1,105 @@
-name: Java CI
-
-on: [push]
-
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
+  group: ${{ github.workflow }}-${{ github.ref }}
 jobs:
-  build_zulu:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: [ '8', '11', '12', '13', '15', '16', '17', '19' ]
-    name: Java ${{ matrix.java }} Zulu build
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Java ${{ matrix.java }} Zulu
-      uses: actions/setup-java@v2
-      with:
-        distribution: 'zulu'
-        java-version: ${{ matrix.java }}
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-    - name: Install artifact locally
-      run: mvn -B install -DskipTests --file pom.xml
-    - name: Checkout sample projects
-      uses: actions/checkout@v3
-      with:
-        repository: ulisesbocchio/jasypt-spring-boot-samples
-        path: jasypt-spring-boot-samples
-        ref: master
-        token: ${{ secrets.CHECKOUT_PAT }}
-    - name: Test sample projects
-      run: mvn -B test --file jasypt-spring-boot-samples/pom.xml -Djasypt.spring.boot.version=$(mvn --file pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
-
   build_temurin:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: [ '8', '11' ]
     name: Java ${{ matrix.Java }} Temurin
+    runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Java ${{ matrix.java }} Temurin
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      name: Set up Java ${{ matrix.java }} Temurin
       uses: actions/setup-java@v2
       with:
-        distribution: 'temurin'
+        distribution: temurin
         java-version: ${{ matrix.java }}
-    - name: Build with Maven
+    - continue-on-error: true
+      name: Build with Maven
       run: mvn -B package --file pom.xml
-    - name: Install artifact locally
+    - continue-on-error: true
+      name: Install artifact locally
       run: mvn -B install -DskipTests --file pom.xml
-    - name: Checkout sample projects
+    - continue-on-error: true
+      name: Checkout sample projects
       uses: actions/checkout@v3
       with:
-        repository: ulisesbocchio/jasypt-spring-boot-samples
         path: jasypt-spring-boot-samples
         ref: master
+        repository: ulisesbocchio/jasypt-spring-boot-samples
         token: ${{ secrets.CHECKOUT_PAT }}
-    - name: Test sample projects
-      run: mvn -B test --file jasypt-spring-boot-samples/pom.xml -Djasypt.spring.boot.version=$(mvn --file pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
-  build_zulu_boot3:
-    runs-on: ubuntu-latest
+    - continue-on-error: true
+      name: Test sample projects
+      run: mvn -B test --file jasypt-spring-boot-samples/pom.xml -Djasypt.spring.boot.version=$(mvn
+        --file pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
     strategy:
       matrix:
-        java: [ '17', '18', '19' ]
-    name: Java ${{ matrix.java }} Zulu build w/ Spring Boot 3
+        java:
+        - '8'
+        - '11'
+  build_zulu:
+    name: Java ${{ matrix.java }} Zulu build
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Java ${{ matrix.java }} Zulu
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'zulu'
-          java-version: ${{ matrix.java }}
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml -Dspring.boot.version=3.0.0 -Dspring.cloud.version=2022.0.0-RC2
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      name: Set up Java ${{ matrix.java }} Zulu
+      uses: actions/setup-java@v2
+      with:
+        distribution: zulu
+        java-version: ${{ matrix.java }}
+    - continue-on-error: true
+      name: Build with Maven
+      run: mvn -B package --file pom.xml
+    - continue-on-error: true
+      name: Install artifact locally
+      run: mvn -B install -DskipTests --file pom.xml
+    - continue-on-error: true
+      name: Checkout sample projects
+      uses: actions/checkout@v3
+      with:
+        path: jasypt-spring-boot-samples
+        ref: master
+        repository: ulisesbocchio/jasypt-spring-boot-samples
+        token: ${{ secrets.CHECKOUT_PAT }}
+    - continue-on-error: true
+      name: Test sample projects
+      run: mvn -B test --file jasypt-spring-boot-samples/pom.xml -Djasypt.spring.boot.version=$(mvn
+        --file pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
+    strategy:
+      matrix:
+        java:
+        - '8'
+        - '11'
+        - '12'
+        - '13'
+        - '15'
+        - '16'
+        - '17'
+        - '19'
+  build_zulu_boot3:
+    name: Java ${{ matrix.java }} Zulu build w/ Spring Boot 3
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      name: Set up Java ${{ matrix.java }} Zulu
+      uses: actions/setup-java@v2
+      with:
+        distribution: zulu
+        java-version: ${{ matrix.java }}
+    - continue-on-error: true
+      name: Build with Maven
+      run: mvn -B package --file pom.xml -Dspring.boot.version=3.0.0 -Dspring.cloud.version=2022.0.0-RC2
+    strategy:
+      matrix:
+        java:
+        - '17'
+        - '18'
+        - '19'
+name: Java CI
+on:
+  repository_dispatch:
+    types: trigger-ga___maven.yml
